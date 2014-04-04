@@ -1,0 +1,141 @@
+<?php
+//$Id$
+
+/*
+*
+* Implementation of hook_requirements();
+*
+*/
+function webform_validate_requirements($phase){
+  $requirements = array();
+
+  if($phase == 'runtime'){
+    if(file_exists(libraries_get_path('ValidateWebform'))){
+      $requirements['vw'] = array(
+        'title' => t('ValidateWebform'),
+        'value' => t('ValidateWebform plugin is loaded.'),
+        'severity' => REQUIREMENT_OK,
+      );
+    }else{
+      $requirements['vw'] = array(
+        'title' => t('ValidateWebform'),
+        'value' => t('Unavailable'),
+        'description' => t('ValidateWebform plugin is missing. Check the readme files for more instructions.'),
+        'severity' => REQUIREMENT_ERROR,
+      );
+    }
+  }
+
+  return $requirements;
+}
+
+/*
+*
+* Implementation of hook_menu();
+*
+*/
+function webform_validate_menu(){
+  $items = array();
+
+  $items['admin/config/content/webform-validate'] = array(
+	  'title' => t('Webform Validate'),
+	  'page callback' => 'drupal_get_form',
+	  'description' => t('ValidateWebform settings and configurations.'),
+	  'page arguments' => array('webform_validate_setting'),
+	  'access arguments' => array('administer site configuration'),
+	  'file' => 'webform_validate.admin.inc',
+  );
+
+  return $items;
+}
+
+/*
+*
+* Implementation of hook_init();
+*
+*/
+function webform_validate_init(){
+  $page = explode("\n", variable_get('wv_settings_other_page', ""));
+  $path = drupal_get_path_alias($_GET['q']);
+  if(!empty($page)){
+    for($i = 0; $i < count($page); $i++){
+      if(drupal_match_path($path, $page[$i])){
+        _wv_set_js();
+      }
+    }
+  }
+}
+
+/*
+*
+* Implementation of template_preprocess_html();
+*
+*/
+function webform_validate_preprocess_html(&$vars){
+  if (isset($_GET['html'])) {
+    $vars['theme_hook_suggestions'][] = 'html__' . $_GET['html'];
+  }
+}
+
+/*
+*
+* Implementation of template_preprocess_page();
+*
+*/
+function webform_validate_preprocess_page(&$vars){
+  if(arg(0) == 'node' && is_numeric(arg(1)) && arg(2) != 'edit' && !arg(2)){
+    $node = $vars['node'];
+    $node_types = variable_get('wv_settings_node_types');
+    for($p = 0; $p < count($node_types); $p++){
+      if($node->type == $node_types[$p] && arg(2) != 'edit'){
+        _wv_set_js();
+      }
+    }
+  }
+  
+  if (isset($_GET['page'])) {
+    $vars['theme_hook_suggestions'][] = 'page__' . $_GET['page'];
+  }
+}
+
+/*
+*
+* Implementation of hook_theme_registry_alter();
+*
+*/
+function webform_validate_theme_registry_alter(&$theme_registry){
+  $module_path = drupal_get_path('module', 'webform_validate') . '/theme';
+  watchdog('Webform Validate', $module_path);
+  $template_file_objects = drupal_find_theme_templates($theme_registry, '.tpl.php', $module_path);
+  
+  foreach($template_file_objects as $key => $template_file_object){
+    if(!preg_match('#/themes/#', $theme_registry[$key]['theme path'])){
+      $theme_registry[$key]['theme path'] = $module_path;
+      $theme_registry[$key] = array_merge($theme_registry[$key], $template_file_object);
+    }
+  }
+}
+
+/*
+*
+* Implementation of hook_perm();
+*
+*/
+function webform_validate_perm(){
+  return array();
+}
+
+/*
+*
+* Insert the main Javascript from jmapping plugin
+*
+*/
+function _wv_set_js(){
+  if(variable_get('wv_libraries_vw_min', 0)){
+    drupal_add_js(libraries_get_path('ValidateWebform').'/jquery.validateWebform.min.js');
+  }else{
+    drupal_add_js(libraries_get_path('ValidateWebform').'/jquery.validateWebform.js');
+  }
+}
+
+?>

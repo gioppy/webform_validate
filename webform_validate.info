@@ -1,0 +1,8 @@
+; $id$
+
+name = Webform Validate
+description = Extra functionality and javascript validation to Webform
+package = Webform
+dependencies[] = libraries
+dependencies[] = webform
+core = 7.x
