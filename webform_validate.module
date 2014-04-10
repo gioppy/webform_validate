@@ -68,6 +68,26 @@ function webform_validate_init(){
 
 /*
 *
+* Implementation of hook_theme();
+*
+*/
+function webform_validate_theme($existing, $type, $theme, $path){
+  return array(
+    'page__ajax' => array(
+      'render element' => 'elements',
+      'path' => drupal_get_path('module', 'webform_validate') . '/theme',
+      'template' => 'page--ajax'
+    ),
+    'html__ajax' => array(
+      'render element' => 'elements',
+      'path' => drupal_get_path('module', 'webform_validate') . '/theme',
+      'template' => 'html--ajax'
+    )
+  );
+}
+
+/*
+*
 * Implementation of template_preprocess_html();
 *
 */
@@ -95,24 +115,6 @@ function webform_validate_preprocess_page(&$vars){
   
   if (isset($_GET['page'])) {
     $vars['theme_hook_suggestions'][] = 'page__' . $_GET['page'];
-  }
-}
-
-/*
-*
-* Implementation of hook_theme_registry_alter();
-*
-*/
-function webform_validate_theme_registry_alter(&$theme_registry){
-  $module_path = drupal_get_path('module', 'webform_validate') . '/theme';
-  watchdog('Webform Validate', $module_path);
-  $template_file_objects = drupal_find_theme_templates($theme_registry, '.tpl.php', $module_path);
-  
-  foreach($template_file_objects as $key => $template_file_object){
-    if(!preg_match('#/themes/#', $theme_registry[$key]['theme path'])){
-      $theme_registry[$key]['theme path'] = $module_path;
-      $theme_registry[$key] = array_merge($theme_registry[$key], $template_file_object);
-    }
   }
 }
 
